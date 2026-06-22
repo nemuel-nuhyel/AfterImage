@@ -1,8 +1,11 @@
 __pycache__/
 *.pyc
+.pytest_cache/
+.venv/
 .env
 node_modules/
 dist/
 *.log
+data/*.db
 data/scenarios/*/logs/
 .DS_Store
