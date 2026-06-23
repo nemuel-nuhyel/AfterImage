@@ -1,0 +1,172 @@
+{
+  "id": "scenario_1",
+  "title": "SSH Reconnaissance",
+  "difficulty": "beginner",
+  "time_limit": 600,
+  "hint_budget": 3,
+  "timeline_day": 1,
+  "description": "A junior analyst notices unusual activity on the development server.",
+  "objectives": [
+    "Identify brute-force SSH patterns",
+    "Distinguish between failed and successful authentication",
+    "Recognize that not all failed logins indicate an active attack",
+    "Find the evidence of successful compromise hidden in the noise"
+  ],
+  "containers": {},
+  "logs": {
+    "auth.log": {
+      "generator": "auth_synth",
+      "events": [
+        {
+          "type": "failed_ssh",
+          "parameters": {
+            "user": "root",
+            "ip": "10.0.0.55",
+            "count": 150
+          },
+          "hidden": false,
+          "red_herring": false,
+          "time_offset": 0
+        },
+        {
+          "type": "successful_ssh",
+          "parameters": {
+            "user": "backup_svc",
+            "ip": "10.0.0.55"
+          },
+          "hidden": true,
+          "red_herring": false,
+          "time_offset": 933
+        },
+        {
+          "type": "sudo_escalation",
+          "parameters": {
+            "user": "backup_svc",
+            "command": "cat /etc/shadow"
+          },
+          "hidden": true,
+          "red_herring": false,
+          "time_offset": 1005
+        },
+        {
+          "type": "normal_admin",
+          "parameters": {
+            "user": "admin",
+            "ip": "192.168.1.10"
+          },
+          "hidden": false,
+          "red_herring": true,
+          "time_offset": 32400
+        },
+        {
+          "type": "failed_ssh",
+          "parameters": {
+            "user": "admin",
+            "ip": "192.168.1.10",
+            "count": 3
+          },
+          "hidden": false,
+          "red_herring": true,
+          "time_offset": 32700
+        }
+      ],
+      "noise_level": 0.1
+    },
+    "firewall.log": {
+      "generator": "firewall_synth",
+      "events": [
+        {
+          "type": "blocked_connection",
+          "parameters": {
+            "src_ip": "10.0.0.55",
+            "dst_port": 22,
+            "count": 200
+          },
+          "hidden": false,
+          "red_herring": false,
+          "time_offset": 0
+        },
+        {
+          "type": "allowed_connection",
+          "parameters": {
+            "src_ip": "10.0.0.55",
+            "dst_port": 22
+          },
+          "hidden": true,
+          "red_herring": false,
+          "time_offset": 933
+        }
+      ],
+      "noise_level": 0.05
+    },
+    "audit.log": {
+      "generator": "audit_synth",
+      "events": [
+        {
+          "type": "user_auth_success",
+          "parameters": {
+            "user": "backup_svc",
+            "ip": "10.0.0.55"
+          },
+          "hidden": true,
+          "red_herring": false,
+          "time_offset": 933
+        },
+        {
+          "type": "credential_acquired",
+          "parameters": {
+            "user": "backup_svc"
+          },
+          "hidden": true,
+          "red_herring": false,
+          "time_offset": 935
+        },
+        {
+          "type": "user_command",
+          "parameters": {
+            "user": "backup_svc",
+            "command": "cat /etc/shadow"
+          },
+          "hidden": true,
+          "red_herring": false,
+          "time_offset": 1005
+        },
+        {
+          "type": "file_open",
+          "parameters": {
+            "user": "backup_svc",
+            "file": "/etc/shadow"
+          },
+          "hidden": true,
+          "red_herring": false,
+          "time_offset": 1006
+        }
+      ],
+      "noise_level": 0.05
+    }
+  },
+  "expected_findings": {
+    "attack_type": "SSH brute-force with credential compromise",
+    "suspicious_ips": [
+      "10.0.0.55"
+    ],
+    "target_accounts": [
+      "root",
+      "backup_svc"
+    ],
+    "attack_succeeded": true,
+    "success_details": "Attacker used backup_svc account at 02:15:33, then sudo escalated to read /etc/shadow"
+  },
+  "grading_rubric": {
+    "detection_accuracy": 30,
+    "evidence_quality": 25,
+    "impact_analysis": 25,
+    "response_plan": 20
+  },
+  "debate_questions": [
+    "You concluded the attack failed. What explains 150 failed attempts followed by a gap, then no further attempts?",
+    "If an attacker tries 150 passwords and stops, what are the probabilities they found the correct one vs. giving up?",
+    "Your evidence board includes the admin login failures at 09:05. Why did you prioritize these over the 02:00 events?",
+    "What would you expect to see in firewall logs if the attacker succeeded? Does your evidence support or contradict this?"
+  ]
+}

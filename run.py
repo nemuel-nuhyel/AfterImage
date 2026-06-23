@@ -3,5 +3,5 @@
 import json
 from pathlib import Path
 
-print("CyberRange AI - Quick Test")
+print("AfterMath - Quick Test")
 print("Run this after creating your initial models")

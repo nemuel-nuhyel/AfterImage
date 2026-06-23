@@ -1,158 +1,107 @@
-from collections.abc import Iterator
-from uuid import UUID
-
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session, sessionmaker
 
-from backend.app.database import Base, get_db
 from backend.app.main import app
-from backend.app.models.session import ScenarioSessionRecord
+from backend.app.services.session_store import session_store
+
+
+@pytest.fixture(autouse=True)
+def clear_sessions() -> None:
+    session_store.clear()
 
 
 client = TestClient(app)
 
 
-@pytest.fixture()
-def sqlite_api_client(tmp_path) -> Iterator[tuple[TestClient, sessionmaker[Session]]]:
-    db_path = tmp_path / "test.db"
-    engine = create_engine(
-        f"sqlite:///{db_path.as_posix()}",
-        connect_args={"check_same_thread": False},
-    )
-    testing_session_local = sessionmaker(bind=engine, autoflush=False, autocommit=False)
-    Base.metadata.create_all(bind=engine)
-
-    def override_get_db() -> Iterator[Session]:
-        db = testing_session_local()
-        try:
-            yield db
-        finally:
-            db.close()
-
-    app.dependency_overrides[get_db] = override_get_db
-    try:
-        with TestClient(app) as test_client:
-            yield test_client, testing_session_local
-    finally:
-        app.dependency_overrides.clear()
-
-
-def test_list_scenarios_returns_public_summary() -> None:
+def test_list_scenarios_returns_json_config_summary() -> None:
     response = client.get("/api/v1/scenarios")
 
     assert response.status_code == 200
     scenarios = response.json()
-    assert len(scenarios) == 1
-
-    scenario = scenarios[0]
-    assert scenario == {
-        "id": "midnight_login_attempts",
-        "title": "Midnight Login Attempts",
-        "difficulty": "beginner",
-        "time_limit": 900,
-        "hint_budget": 3,
-        "timeline_day": 1,
-        "description": (
-            "A junior analyst notices unusual SSH activity on the development server "
-            "during off-hours."
-        ),
-    }
+    assert scenarios == [
+        {
+            "id": "scenario_1",
+            "title": "SSH Reconnaissance",
+            "difficulty": "beginner",
+            "time_limit": 600,
+            "hint_budget": 3,
+            "timeline_day": 1,
+            "description": "A junior analyst notices unusual activity on the development server.",
+            "available_logs": ["auth.log", "firewall.log", "audit.log"],
+        }
+    ]
 
 
-def test_get_scenario_returns_public_detail() -> None:
-    response = client.get("/api/v1/scenarios/midnight_login_attempts")
+def test_get_scenario_returns_public_detail_without_log_answers() -> None:
+    response = client.get("/api/v1/scenarios/scenario_1")
 
     assert response.status_code == 200
     scenario = response.json()
 
-    assert scenario["id"] == "midnight_login_attempts"
+    assert scenario["id"] == "scenario_1"
     assert scenario["objectives"] == [
-        "Identify brute-force authentication patterns",
-        "Distinguish failed authentication from successful compromise",
-        "Separate real evidence from suspicious-looking admin noise",
+        "Identify brute-force SSH patterns",
+        "Distinguish between failed and successful authentication",
+        "Recognize that not all failed logins indicate an active attack",
+        "Find the evidence of successful compromise hidden in the noise",
     ]
-    assert scenario["available_logs"] == ["auth.log", "firewall.log"]
+    assert "backup_svc" not in response.text
+    assert "10.0.0.55" not in response.text
 
 
-def test_get_scenario_does_not_expose_ground_truth() -> None:
-    response = client.get("/api/v1/scenarios/midnight_login_attempts")
+def test_start_scenario_creates_in_memory_session_and_returns_logs() -> None:
+    response = client.post("/api/v1/scenarios/scenario_1/start")
+
+    assert response.status_code == 201
+    started = response.json()
+
+    assert started["scenario_id"] == "scenario_1"
+    assert started["status"] == "active"
+    assert started["available_logs"] == ["auth.log", "firewall.log", "audit.log"]
+    assert isinstance(started["session_id"], str)
+
+    session_response = client.get(f"/api/v1/sessions/{started['session_id']}")
+    assert session_response.status_code == 200
+    session = session_response.json()
+    assert session["session_id"] == started["session_id"]
+    assert session["available_logs"] == ["auth.log", "firewall.log", "audit.log"]
+    assert "logs" not in session
+
+
+def test_list_session_logs_returns_available_files() -> None:
+    started = client.post("/api/v1/scenarios/scenario_1/start").json()
+
+    response = client.get(f"/api/v1/sessions/{started['session_id']}/logs")
 
     assert response.status_code == 200
-    response_text = response.text
-
-    assert "expected_findings" not in response_text
-    assert "grading_rubric" not in response_text
-    assert "debate_questions" not in response_text
-    assert "backup_svc" not in response_text
-    assert "/etc/shadow" not in response_text
-    assert "10.0.0.55" not in response_text
+    logs = response.json()
+    assert [log["name"] for log in logs] == ["auth.log", "firewall.log", "audit.log"]
+    assert all(log["line_count"] > 0 for log in logs)
 
 
-def test_get_unknown_scenario_returns_404() -> None:
-    response = client.get("/api/v1/scenarios/not_real")
+def test_get_session_log_returns_generated_content() -> None:
+    started = client.post("/api/v1/scenarios/scenario_1/start").json()
 
-    assert response.status_code == 404
-    assert response.json() == {"detail": "Scenario not found"}
+    response = client.get(f"/api/v1/sessions/{started['session_id']}/logs/auth.log")
 
-
-def test_start_scenario_creates_sqlite_session(
-    sqlite_api_client: tuple[TestClient, sessionmaker[Session]],
-) -> None:
-    test_client, testing_session_local = sqlite_api_client
-
-    response = test_client.post(
-        "/api/v1/scenarios/midnight_login_attempts/start",
-        json={"mode": "timed"},
-    )
-
-    assert response.status_code == 201
-    session = response.json()
-    session_id = UUID(session["session_id"])
-
-    assert session["scenario_id"] == "midnight_login_attempts"
-    assert session["mode"] == "timed"
-    assert session["status"] == "active"
-    assert session["expires_at"] is not None
-    assert session["remaining_seconds"] == 900
-    assert session["hints_used"] == 0
-    assert "seed" not in session
-
-    with testing_session_local() as db:
-        record = db.get(ScenarioSessionRecord, str(session_id))
-
-    assert record is not None
-    assert record.scenario_id == "midnight_login_attempts"
-    assert record.mode == "timed"
-    assert record.status == "active"
-    assert record.seed > 0
-    assert record.hints_used == 0
+    assert response.status_code == 200
+    log = response.json()
+    assert log["log_file"] == "auth.log"
+    assert log["line_count"] > 0
+    assert "Failed password for root from 10.0.0.55" in log["content"]
+    assert "Accepted password for backup_svc from 10.0.0.55" in log["content"]
 
 
-def test_start_practice_scenario_has_no_expiry(
-    sqlite_api_client: tuple[TestClient, sessionmaker[Session]],
-) -> None:
-    test_client, _ = sqlite_api_client
-
-    response = test_client.post(
-        "/api/v1/scenarios/midnight_login_attempts/start",
-        json={"mode": "practice"},
-    )
-
-    assert response.status_code == 201
-    session = response.json()
-    assert session["mode"] == "practice"
-    assert session["expires_at"] is None
-    assert session["remaining_seconds"] is None
+def test_unknown_scenario_and_session_return_404() -> None:
+    assert client.get("/api/v1/scenarios/not_real").status_code == 404
+    assert client.post("/api/v1/scenarios/not_real/start").status_code == 404
+    assert client.get("/api/v1/sessions/not-real").status_code == 404
 
 
-def test_start_unknown_scenario_returns_404(
-    sqlite_api_client: tuple[TestClient, sessionmaker[Session]],
-) -> None:
-    test_client, _ = sqlite_api_client
+def test_unknown_log_file_returns_404() -> None:
+    started = client.post("/api/v1/scenarios/scenario_1/start").json()
 
-    response = test_client.post("/api/v1/scenarios/not_real/start", json={"mode": "timed"})
+    response = client.get(f"/api/v1/sessions/{started['session_id']}/logs/unknown.log")
 
     assert response.status_code == 404
-    assert response.json() == {"detail": "Scenario not found"}
+    assert response.json() == {"detail": "Log file not found"}
