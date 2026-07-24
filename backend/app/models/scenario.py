@@ -18,6 +18,7 @@ DraftStatus = Literal[
     "rejected",
     "published",
 ]
+ThreatDataSourceName = Literal["cve", "nvd", "mitre", "cisa_kev", "epss", "custom"]
 
 
 class ContainerConfig(BaseModel):
@@ -208,3 +209,38 @@ class ScenarioDraft(BaseModel):
     submitted_at: datetime | None = None
     approved_at: datetime | None = None
     approved_by: str | None = None
+
+
+class StudioGenerateRequest(BaseModel):
+    topic: str = Field(..., min_length=3, max_length=120)
+    difficulty: Difficulty = "beginner"
+    source: ThreatDataSourceName = "custom"
+    cve_id: str | None = Field(default=None, max_length=32)
+    technique_id: str | None = Field(default=None, max_length=32)
+    time_limit: int = Field(default=900, ge=300, le=3600)
+
+
+class StudioDraftCreateRequest(BaseModel):
+    config: ScenarioConfig
+    source_type: Literal["ai_generated", "user_submitted"] = "user_submitted"
+    threat_intel_source: ThreatIntelSource | None = None
+
+
+class StudioSubmitRequest(BaseModel):
+    draft_id: UUID
+
+
+class ValidationResult(BaseModel):
+    valid: bool
+    schema_valid: bool
+    safety_check: SafetyCheckResult | None = None
+    errors: list[str] = Field(default_factory=list)
+
+
+class ThreatDataItem(BaseModel):
+    source: ThreatDataSourceName
+    identifier: str
+    title: str
+    summary: str
+    severity: str | None = None
+    epss_score: float | None = Field(default=None, ge=0.0, le=1.0)

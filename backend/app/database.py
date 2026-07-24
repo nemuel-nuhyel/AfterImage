@@ -46,6 +46,8 @@ _initialized = False
 
 def init_db(db_engine: Engine = engine) -> None:
     global _initialized
+    from .auth import models as _auth_models  # noqa: F401
+
     Base.metadata.create_all(bind=db_engine)
     if db_engine is engine:
         _initialized = True
