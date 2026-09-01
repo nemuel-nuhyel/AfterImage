@@ -1,4 +1,4 @@
-# CyberRange AI / AfterMath
+#  AfterMath
 
 ## Adversarial SOC Investigation Simulator
 
