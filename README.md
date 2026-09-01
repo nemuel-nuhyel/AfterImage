@@ -1,383 +1,498 @@
-CyberRange AI / AfterMath
+# CyberRange AI / AfterMath
 
-Adversarial SOC Investigation Simulator
+## Adversarial SOC Investigation Simulator
 
-Status: In development
+> **Status:** In development
 
-CyberRange AI is a portable, Docker-oriented training environment for Security Operations Center (SOC) investigations. It gives learners incomplete and sometimes misleading synthetic security data, then asks them to construct hypotheses, defend their evidence, manage uncertainty, and produce an incident report.
+CyberRange AI is a portable, Docker-oriented training environment for Security Operations Center (SOC) investigations.
 
-The project is designed to move beyond simple answer matching. Its long-term goal is to combine a deterministic investigation simulator with an AI-assisted scenario-generation and review system called Scenario Studio.
+The platform gives learners incomplete and sometimes misleading synthetic security data. They must inspect logs, construct hypotheses, mark evidence, manage uncertainty, and produce an incident report.
 
-This repository is an active academic project. The implementation is the source of truth: features described as planned or proposed below are not presented as completed functionality.
+The long-term project combines:
 
-Why this project exists
+1. A deterministic SOC investigation simulator.
+2. An AI-assisted scenario-generation and review system called **Scenario Studio**.
 
-Traditional cybersecurity exercises often provide clean data and a clearly identifiable answer. Real SOC work is different:
+> **Important:** This is an active academic project. The repository implementation is the source of truth. Features marked as planned are not yet complete.
 
-Evidence is distributed across several log sources.
+---
 
-Events may be incomplete, noisy, or contradictory.
+## Project Motivation
 
-Analysts must distinguish malicious activity from false positives.
+Traditional cybersecurity exercises often provide clean data and an obvious answer. Real SOC investigations are more complex:
 
-Findings must be supported with traceable evidence.
+- Evidence is distributed across multiple log sources.
+- Events can be incomplete, noisy, or contradictory.
+- Analysts must separate malicious activity from legitimate behavior.
+- Findings must be supported by traceable evidence.
+- Conclusions must be communicated under time pressure.
+- Analysts need to manage false positives and uncertainty.
 
-Conclusions often need to be explained to other people under time pressure.
+CyberRange AI is designed to train these analytical skills in a reproducible and safe environment.
 
-CyberRange AI is intended to train those analytical skills in a reproducible and safe environment.
+---
 
-Core simulator
+## Core Simulator
 
 The simulator is built around an investigation workflow:
 
-Select a security scenario.
+1. Select a security scenario.
+2. Start an investigation session with a time limit.
+3. Inspect synthetic authentication, firewall, and audit logs.
+4. Search for suspicious patterns and relationships.
+5. Mark relevant events as evidence.
+6. Add investigation notes and hypotheses.
+7. Build a report referencing the supporting evidence.
+8. Receive structured feedback and scoring.
 
-Start an investigation session with a time limit.
+The scenarios are synthetic and may contain:
 
-Inspect synthetic authentication, firewall, and audit logs.
+- Realistic attack patterns
+- Legitimate background activity
+- Red-herring events
+- Hidden evidence
+- Multiple log sources
+- Contradictory or incomplete information
 
-Mark relevant events as evidence and add analyst notes.
+The goal is to train reasoning and evidence-based analysis instead of simple pattern matching.
 
-Form an assessment of what happened.
+---
 
-Build a report that references the evidence supporting each finding.
+## Current Project Status
 
-Receive structured feedback and scoring as the evaluation features mature.
+### Implemented Foundation
 
-The scenarios are synthetic. They are designed to contain realistic attack patterns, legitimate activity, red herrings, and evidence that must be correlated rather than interpreted in isolation.
+- FastAPI backend
+- Pydantic request and response validation
+- SQLAlchemy data-access layer
+- SQLite persistence
+- Deterministic synthetic log generation
+- Scenario selection
+- Investigation session management
+- Timed investigation foundation
+- Authentication, firewall, and audit-log inspection
+- Evidence marking
+- Analyst notes
+- Report construction
+- Evidence-reference validation
+- React/Vite frontend prototype
+- Docker-oriented project structure
+- Initial scoring and evaluation foundations
 
-Current implementation status
+### Currently In Progress
 
-Area
+- Complete investigation workbench
+- Improved investigation interface
+- Expanded scenario support
+- More detailed scoring and feedback
+- Stronger automated tests
+- Better documentation and reproducible setup
 
-Current status
+### Planned Features
 
-FastAPI backend
+- AI devil's-advocate conversations
+- LLM-assisted grading
+- Hint generation
+- Scenario Studio
+- Threat-intelligence integrations
+- AI-generated investigation scenarios
+- Automated scenario safety checks
+- Automated scenario quality review
+- Human approval workflows
+- Isolated container-based training labs
+- Community scenario submissions
+- Multi-user deployment
 
-Implemented foundation
+> The current implementation does not yet contain a production LLM integration. AI-assisted generation, adversarial feedback, and advanced AI grading are planned extensions.
 
-Pydantic request and response validation
+---
 
-Implemented foundation
+## Architecture
 
-SQLAlchemy and SQLite persistence
-
-Implemented foundation
-
-Deterministic synthetic log generation
-
-Implemented
-
-Scenario selection and investigation sessions
-
-Implemented/prototype
-
-Log inspection
-
-Implemented/prototype
-
-Evidence marking and analyst notes
-
-Implemented foundation
-
-Report evidence-reference validation
-
-Implemented foundation
-
-React/Vite interface
-
-Prototype and in progress
-
-Basic investigation scoring
-
-Prototype/in progress
-
-AI devil's-advocate debate and advanced grading
-
-Planned
-
-Scenario Studio with LLM generation
-
-Planned
-
-Live NVD, MITRE ATT&CK, CISA KEV, and EPSS integrations
-
-Planned
-
-Isolated container-based labs
-
-Planned expansion
-
-Community submissions and human review
-
-Deferred roadmap
-
-Project architecture
-
+```mermaid
 flowchart LR
-    UI["React / Vite UI"] --> API["FastAPI API"]
-    API --> DB[("SQLite / SQLAlchemy")]
-    API --> LOGS["Deterministic log synthesis"]
-    API --> EVAL["Validation and evaluation"]
+    UI["React / Vite Interface"] --> API["FastAPI Backend"]
+    API --> DB[("SQLite Database")]
+    API --> LOGS["Deterministic Log Generator"]
+    API --> EVAL["Validation and Evaluation"]
     STUDIO["Planned Scenario Studio"] -.-> API
+```
 
-The current foundation favors deterministic behavior and explicit validation so that an investigation can be reproduced during development and testing. AI-generated content is treated as untrusted input and is intended to pass through validation and review gates before becoming a published training scenario.
+The current architecture prioritizes:
 
-Technology stack
+- Deterministic behavior
+- Explicit validation
+- Reproducible investigations
+- Traceable evidence
+- Safe synthetic data
+- Clear separation between current features and future AI capabilities
 
-Backend: Python, FastAPI, Pydantic, SQLAlchemy
+---
 
-Database: SQLite for the current prototype
+## Technology Stack
 
-Frontend: React, Vite
+| Layer | Technology |
+| --- | --- |
+| Backend | Python, FastAPI |
+| Validation | Pydantic |
+| Database access | SQLAlchemy |
+| Database | SQLite |
+| Frontend | React, Vite |
+| Deployment | Docker and Docker Compose |
+| Testing | Python tests, API tests, schema validation |
+| Planned AI layer | LLM structured-output generation and review |
+| Planned threat intelligence | NVD, MITRE ATT&CK, CISA KEV, FIRST EPSS |
 
-Deployment direction: Docker and Docker Compose
+---
 
-Testing direction: Python automated tests, API tests, schema validation, and reproducibility checks
+## Investigation Workflow
 
-Planned AI layer: LLM structured-output generation, adversarial feedback, and quality review
-
-Planned threat-intelligence sources: NVD CVE API, MITRE ATT&CK TAXII, CISA KEV, and FIRST EPSS
-
-Scenario Studio - planned subsystem
-
-Scenario Studio is the planned content-generation subsystem. It will support two controlled creation paths:
-
-AI-generated scenarios
-
-An author selects a topic, difficulty, and threat-intelligence source. The system then uses structured public threat intelligence to generate a fictional scenario containing:
-
-A scenario narrative
-
-Synthetic logs
-
-Learning objectives
-
-Relevant evidence
-
-Red-herring events
-
-Hidden events
-
-Debate questions
-
-An evaluation rubric
-
-User-submitted scenarios
-
-Users will be able to upload or paste scenario JSON. Submitted content will be validated and reviewed before publication. User submissions will always require human approval.
-
-Planned review pipeline
-
+```mermaid
 flowchart TD
-    D["Draft"] --> AI["Automated schema, safety, and quality review"]
-    AI --> R["Needs revision"]
-    AI --> H["Human review"]
+    A["Select Scenario"] --> B["Start Session"]
+    B --> C["Inspect Synthetic Logs"]
+    C --> D["Mark Evidence and Add Notes"]
+    D --> E["Build Incident Report"]
+    E --> F["Evaluate Findings"]
+```
+
+Each investigation session acts as the boundary for:
+
+- Session state
+- Investigation time
+- Log access
+- Evidence selection
+- Analyst notes
+- Report construction
+- Evaluation results
+
+---
+
+## Planned Scenario Studio
+
+Scenario Studio is the planned content-generation subsystem for creating scalable, safe, and pedagogically useful SOC scenarios.
+
+It will support two creation paths:
+
+### AI-Generated Scenarios
+
+An author will select:
+
+- Investigation topic
+- Difficulty level
+- Threat-intelligence source
+- Optional CVE identifier
+- Optional MITRE ATT&CK technique
+
+The system will then generate a fictional scenario containing:
+
+- Scenario narrative
+- Synthetic logs
+- Learning objectives
+- Expected evidence
+- Red-herring events
+- Hidden events
+- Debate questions
+- Evaluation rubric
+
+### User-Submitted Scenarios
+
+Users will eventually be able to upload or paste scenario JSON configurations.
+
+Submitted scenarios will pass through:
+
+1. Schema validation
+2. Safety checks
+3. AI quality review
+4. Human review
+5. Approval or rejection
+6. Publication
+
+User-submitted scenarios will always require human approval.
+
+---
+
+## Planned Scenario Review Pipeline
+
+```mermaid
+flowchart TD
+    D["Draft"] --> V["Schema and Safety Validation"]
+    V --> AI["AI Quality Review"]
+    AI --> R["Needs Revision"]
+    AI --> H["Human Review"]
     H --> A["Approved"]
-    A --> P["Published"]
     H --> X["Rejected"]
+    A --> P["Published"]
+```
 
-The AI must never publish a scenario directly. A configurable auto-approval path may be considered for AI-generated content only when all quality dimensions meet the defined threshold and the safety checks pass completely. Community submissions remain subject to human review.
+The AI must never publish a scenario without passing the required safety and quality controls.
 
-Safety guardrails
+The planned review states are:
 
-CyberRange AI is intended for defensive education and safe simulation. The planned Scenario Studio will enforce rules such as:
+```text
+draft
+pending_ai_review
+needs_revision
+pending_human_review
+approved
+rejected
+published
+```
 
-Allowed
+---
 
-RFC 1918 private IP addresses
+## Threat-Intelligence Sources
 
-Documentation domains such as example.com and test.local
+The planned Scenario Studio will use public and structured threat-intelligence sources:
 
-Fictional companies and synthetic usernames
+| Source | Intended use |
+| --- | --- |
+| NVD CVE API | CVE metadata, CVSS scores, descriptions, and references |
+| MITRE ATT&CK TAXII | Techniques, tactics, procedures, and detection guidance |
+| CISA KEV Catalog | Known exploited vulnerabilities and exploitation status |
+| FIRST EPSS API | Exploit probability scores and percentiles |
 
-Synthetic logs that describe realistic security events
+The system is intended to use public threat intelligence as inspiration for synthetic training scenarios rather than copying real incidents or targeting real organizations.
 
-Normal cybersecurity terminology, including terms such as brute force and lateral movement
+---
 
-Blocked
+## Safety Guardrails
 
-Real victim organizations or identifiable personal data
+CyberRange AI is designed for defensive education and safe simulation.
 
-Real credentials or secrets
+### Allowed Content
 
-Public target IP addresses
+- RFC 1918 private IP addresses
+- Documentation domains such as `example.com` and `test.local`
+- Fictional company names
+- Synthetic usernames
+- Synthetic security logs
+- Normal cybersecurity terminology
+- Descriptions of attack behaviors for educational purposes
 
-Malware code or payloads
+### Blocked Content
 
-Exploit commands and credential-theft instructions
+- Real victim organizations
+- Personal data
+- Real credentials or secrets
+- Public target IP addresses
+- Malware code
+- Exploit payloads
+- Credential-theft instructions
+- Destructive commands
+- Filesystem-wiping or disk-formatting commands
 
-Destructive commands
+The system should distinguish between explaining an attack pattern and providing instructions to perform an attack.
 
-The system should distinguish between describing an attack pattern for learning and providing instructions to carry out an attack.
+---
 
-Quality and evaluation strategy
+## Quality Review Dimensions
 
-Evaluation is designed as a layered process rather than a single model score.
+The planned Scenario Studio will assess each generated or uploaded scenario across ten dimensions:
 
-Current and deterministic checks
+1. Realism
+2. Learning-objective clarity
+3. Expected-answer fairness
+4. Evidence sufficiency
+5. Red-herring balance
+6. Difficulty calibration
+7. Safety
+8. IP-address validation
+9. Log generability
+10. Debate-question quality
 
-Request and response schema validation
+A scenario should only move forward when it is safe, technically valid, realistic, and educationally useful.
 
-Required-field validation
+---
 
-Safety and input checks
+## Evaluation Strategy
 
-Evidence-reference validation in reports
+Evaluation is designed as a layered process instead of relying only on an AI-generated score.
 
-Functional API tests
+### Current and Deterministic Checks
 
-Deterministic log-generation and reproducibility checks
+- Request and response schema validation
+- Required-field validation
+- Safety and input validation
+- Evidence-reference validation
+- Functional API tests
+- Deterministic log-generation checks
+- Reproducibility checks
+- Basic investigation scoring
 
-Planned scenario-quality review
+### Planned Evaluation
 
-Generated or uploaded scenarios will be assessed across ten dimensions:
+The academic evaluation will compare manually authored scenarios with AI-generated scenarios.
 
-Realism
+The formal project specification targets:
 
-Learning-objective clarity
+- One manually authored scenario
+- Three AI-generated scenarios
+- At least ten participants
+- Comparison of learner performance across scenario types
+- Evaluation of safety, realism, fairness, and pedagogical quality
 
-Expected-answer fairness
+---
 
-Evidence sufficiency
+## Example API Flow
 
-Red-herring balance
+The simulator uses versioned API endpoints.
 
-Difficulty calibration
+A typical investigation begins by starting a session for a selected scenario:
 
-Safety
+```http
+POST /api/v1/scenarios/{scenario_id}/start
+```
 
-IP-address validation
+The resulting session manages the investigation state, evidence selection, notes, report construction, and evaluation.
 
-Log generability
+---
 
-Debate-question quality
+## Roadmap
 
-The planned academic evaluation compares learner performance on manually authored and AI-generated scenarios. The formal specification targets one manual scenario, three AI-generated scenarios, and a study with at least ten participants.
+### Simulator Core
 
-Roadmap
+- [x] Establish FastAPI backend foundation
+- [x] Add deterministic synthetic log generation
+- [x] Add scenario and session foundations
+- [x] Add evidence and report-validation foundations
+- [ ] Complete the investigation workbench
+- [ ] Expand the scenario library
+- [ ] Add AI devil's-advocate interaction
+- [ ] Finalize advanced grading and feedback
 
-Simulator
+### Scenario Studio
 
-Establish the FastAPI backend foundation
+- [ ] Integrate NVD CVE API
+- [ ] Integrate MITRE ATT&CK TAXII
+- [ ] Integrate CISA KEV
+- [ ] Integrate FIRST EPSS
+- [ ] Normalize threat-intelligence data
+- [ ] Add structured LLM scenario generation
+- [ ] Add scenario draft editing
+- [ ] Implement safety checks
+- [ ] Implement automated quality review
+- [ ] Implement review-state transitions
+- [ ] Add human approval tools
 
-Add deterministic synthetic security-log generation
+### Deferred Product Roadmap
 
-Add scenario and session foundations
+- [ ] Community scenario submissions
+- [ ] Multi-user deployment
+- [ ] Public scenario catalog
+- [ ] Human moderation queue
+- [ ] Broader isolated training labs
+- [ ] Additional deployment options
 
-Add evidence and report-validation foundations
+---
 
-Complete the production investigation workbench
+## Local Development
 
-Expand the scenario library
+### Prerequisites
 
-Add the AI devil's-advocate interaction
+- Python 3.11 or newer
+- Node.js and npm
+- Docker Desktop or Docker Engine
+- Docker Compose
 
-Finalize advanced grading and feedback
+### Run with Docker
 
-Scenario Studio
+Replace the placeholders with the actual repository URL and directory name.
 
-Integrate public threat-intelligence sources
-
-Normalize CVE, ATT&CK, KEV, and EPSS data
-
-Add structured LLM scenario generation
-
-Add draft preview and editing
-
-Implement safety checks
-
-Implement automated quality review
-
-Add review-status persistence and workflow transitions
-
-Add human approval tools
-
-Deferred product roadmap
-
-Community scenario submissions
-
-Multi-user deployment
-
-Human review queue and moderation tools
-
-Broader isolated training labs
-
-Public scenario catalog
-
-Local development
-
-Prerequisites
-
-Python 3.11 or newer
-
-Node.js and npm
-
-Docker Desktop or Docker Engine with Docker Compose
-
-Run with Docker
-
+```bash
 git clone <repository-url>
 cd <repository-directory>
 docker compose up --build
+```
 
-The exact service names, ports, and environment variables may change while the project is under active development. Refer to the repository's Docker Compose file and application configuration for the current values.
+### Run the Backend Separately
 
-Run the backend and frontend separately
-
-The expected development split is:
-
-# Backend
+```bash
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 uvicorn app.main:app --reload
+```
 
-# Frontend
+### Run the Frontend Separately
+
+```bash
 npm install
 npm run dev
+```
 
-If the repository structure changes, use the commands documented beside the relevant backend and frontend package configuration.
+The exact commands, service names, ports, and environment variables may change while the project is under development. Refer to the current project structure and Docker Compose configuration for the latest setup.
 
-Example API flow
+---
 
-The simulator exposes versioned API endpoints. A typical investigation begins by starting a session for a selected scenario:
+## Academic Alignment
 
-POST /api/v1/scenarios/{scenario_id}/start
+The project is being developed alongside the following thesis topic:
 
-The session then acts as the boundary for investigation state, evidence selection, notes, report construction, and later evaluation.
+> **AI-Assisted Generation and Validation of SOC Training Scenarios Using Public Threat Intelligence and Synthetic Forensic Logs**
 
-Academic alignment
+### Research Questions
 
-The project is being developed alongside the thesis topic:
+1. Can LLMs generate pedagogically sound SOC training scenarios from structured threat intelligence?
+2. Which automated safety and quality checks are required to make generated scenarios realistic, fair, and safe?
+3. Can adversarial AI feedback improve analytical reasoning compared with traditional grading?
 
-AI-Assisted Generation and Validation of SOC Training Scenarios Using Public Threat Intelligence and Synthetic Forensic Logs
+### Bachelor-Level Scope
 
-The main research questions are:
+The initial academic scope focuses on:
 
-Can LLMs generate pedagogically sound SOC training scenarios from structured threat intelligence?
+- The simulator core
+- One manually authored scenario
+- Scenario Studio version 1
+- AI-generated scenarios
+- Safety and quality validation
+- Comparison of AI-generated and manually authored scenarios
 
-Which automated safety and quality checks are necessary to make generated scenarios realistic, fair, and safe?
+The following features are outside the initial thesis scope and are deferred to the product roadmap:
 
-Can adversarial AI feedback improve analytical reasoning compared with traditional grading?
+- Community publishing
+- Multi-user deployment
+- Payment systems
+- Large-scale public moderation
 
-The bachelor-level scope focuses on the simulator core, Scenario Studio v1, and the comparison of AI-generated and manually authored scenarios. Community publishing, multi-user deployment, and payment features are outside the initial thesis scope.
+---
 
-Design principles
+## Design Principles
 
-Evidence before conclusions: findings should be traceable to observed events.
+### Evidence Before Conclusions
 
-Reproducibility: deterministic synthetic data makes behavior testable.
+Every important finding should be connected to specific observed events.
 
-Adversarial reasoning: the learner should defend a hypothesis, not only select an answer.
+### Reproducibility
 
-Safety by construction: generated content must be sanitized and reviewed.
+Deterministic synthetic data makes investigations easier to test, compare, and reproduce.
 
-Human oversight: AI can assist with generation and review, but it should not silently publish training content.
+### Adversarial Reasoning
 
-Progressive implementation: the working repository takes priority over proposed future architecture.
+The learner should defend a hypothesis instead of only selecting a predefined answer.
 
-Disclaimer
+### Safety by Construction
 
-CyberRange AI is an educational defensive-security project. It uses synthetic data and is not intended for attacking real systems, testing public targets, or handling real credentials or victim data.
+Generated scenarios must be validated, sanitized, and reviewed before publication.
 
+### Human Oversight
+
+AI can assist with generation and review, but human oversight remains part of the publishing process.
+
+### Progressive Implementation
+
+The working repository takes priority over proposed future architecture.
+
+---
+
+## Disclaimer
+
+CyberRange AI is an educational defensive-security project.
+
+It uses synthetic data and is not intended for:
+
+- Attacking real systems
+- Testing public targets
+- Handling real credentials
+- Processing real victim data
+- Generating destructive or malicious payloads
